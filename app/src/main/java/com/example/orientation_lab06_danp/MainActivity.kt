@@ -8,15 +8,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -41,18 +42,31 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             var orientation by remember { mutableStateOf(0f) }
+            var fixedOrientation by remember { mutableStateOf<Float?>(null) }
 
             LaunchedEffect(Unit) {
                 while (true) {
                     SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerReading, magnetometerReading)
                     SensorManager.getOrientation(rotationMatrix, orientationAngles)
-                    orientation = orientationAngles[0] // Yaw angle
+                    if (fixedOrientation == null) {
+                        orientation = orientationAngles[0] // Yaw angle
+                    }
                     delay(16) // roughly 60fps
                 }
             }
 
             Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                DrawTriangle(orientation)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    DrawTriangle(fixedOrientation ?: orientation)
+                    Button(
+                        onClick = { fixedOrientation = if (fixedOrientation == null) orientation else null },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                    ) {
+                        Text(text = if (fixedOrientation == null) "Fijar" else "Liberar")
+                    }
+                }
             }
         }
     }
@@ -92,5 +106,20 @@ fun DrawTriangle(orientation: Float) {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    DrawTriangle(0f)
+    var orientation by remember { mutableStateOf(0f) }
+    var fixedOrientation by remember { mutableStateOf<Float?>(null) }
+
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            DrawTriangle(fixedOrientation ?: orientation)
+            Button(
+                onClick = { fixedOrientation = if (fixedOrientation == null) orientation else null },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+            ) {
+                Text(text = if (fixedOrientation == null) "Fijar" else "Liberar")
+            }
+        }
+    }
 }
